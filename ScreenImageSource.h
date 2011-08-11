@@ -35,6 +35,8 @@
     NSLock *screenUpdateLock;
 }
 
+- (id)initWithScreenNumber:(int)screenNum;
+
 - (BOOL)start;
 - (BOOL)stop;
 

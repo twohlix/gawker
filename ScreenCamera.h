@@ -12,6 +12,9 @@
 @interface ScreenCamera : Camera {
     NSImage *recentImage;
     IBOutlet NSTextField *saveFrameInterval;
+	int screenNumber;
 }
+
+- (id)initWithScreenNumber:(int)screenNum;
 
 @end

@@ -14,6 +14,7 @@
     NSTimer *recordTimer;
 }
 
+- (id)initWithDelegate:(id)newDelegate andScreenNumber:(int)screenNum;
 - (void)captureFrameAtInterval:(double)interval;
 - (void)recordTimerFired:(NSTimer *)timer;
 - (void)setScreenToGrab:(int)screen;

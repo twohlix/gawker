@@ -136,10 +136,18 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
         NSLog(@"NIL connectButtonColumn");
     }
 
-    // For now, ScreenCamera doesn't really work all that well.
-    ScreenCamera *screenCam = [[ScreenCamera alloc] init];
-    [availableCameras insertObject:screenCam atIndex:0];
-    [screenCam release];
+    //Get all the screens we have available
+	int numScreens = [[NSScreen screens] count];
+	NSLog(@"Creating %d Screen Cameras", numScreens);
+	
+	int i;
+	for(i=0;i<numScreens; ++i){
+		NSLog(@"\tCreating Screen Camera #%d", i);
+		ScreenCamera *screenCam = [[ScreenCamera alloc] initWithScreenNumber:i];
+		[[screenCam camController] setScreenToGrab:i];
+		[availableCameras insertObject:screenCam atIndex:0];
+		[screenCam release];
+	}
 
     //
     // Listen for device connect/disconnect notifications.

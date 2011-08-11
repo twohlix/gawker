@@ -15,18 +15,40 @@
 - (id)init
 {
     self = [super initWithWindowNibName:@"ScreenCamera"];
-
+	
+	screenNumber = 0;
     if (self) {
-        camController = [[ScreenCameraController alloc] initWithDelegate:self];
+        camController = [[ScreenCameraController alloc] initWithDelegate:self andScreenNumber:screenNumber];
         if (camController) {
-            [[self window] setTitle:[camController sourceDescription]];
+            [[self window] setTitle:[NSString stringWithFormat:@"%d", screenNumber]];
+			[(ScreenCameraController *)camController setScreenToGrab:screenNumber];
             icon = [[NSImage imageNamed:@"NSApplicationIcon"] retain];
             recentImage = [[NSImage imageNamed:@"window_nib.tiff"] retain];
         }
     }
-
+	
     return self;
 }
+
+- (id)initWithScreenNumber:(int)screenNum
+{
+    self = [super initWithWindowNibName:@"ScreenCamera"];
+	
+	screenNumber = screenNum;
+    if (self) {
+        camController = [[ScreenCameraController alloc] initWithDelegate:self andScreenNumber:screenNumber];
+        if (camController) {
+            [[self window] setTitle:[NSString stringWithFormat:@"%d", screenNumber]];
+			[(ScreenCameraController *)camController setScreenToGrab:screenNumber];
+            icon = [[NSImage imageNamed:@"NSApplicationIcon"] retain];
+            recentImage = [[NSImage imageNamed:@"window_nib.tiff"] retain];
+        }
+    }
+	
+    return self;
+}
+
+
 
 - (void)awakeFromNib
 {
@@ -84,16 +106,16 @@
 - (void)windowDidMove:(NSNotification *)note
 {
     [[self window] saveFrameUsingName:@"ScreenCamera"];
-    int screenNum = [[NSScreen screens] indexOfObject:[[self window] screen]];
-    [(ScreenCameraController *)camController setScreenToGrab:screenNum];
+    //int screenNum = [[NSScreen screens] indexOfObject:[[self window] screen]];
+    [(ScreenCameraController *)camController setScreenToGrab:screenNumber];
     [super windowDidMove:note];
 }
 
 - (IBAction)showWindow:(id)sender
 {
     [super showWindow:sender];
-    int screenNum = [[NSScreen screens] indexOfObject:[[self window] screen]];
-    [(ScreenCameraController *)camController setScreenToGrab:screenNum];
+    //int screenNum = [[NSScreen screens] indexOfObject:[[self window] screen]];
+    [(ScreenCameraController *)camController setScreenToGrab:screenNumber];
 }
 
 @end

@@ -42,6 +42,30 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
     return self;
 }
 
+- (id)initWithScreenNumber:(int)screenNum
+{
+    if (self = [super init]) {
+        int initialScreen = screenNum;
+        isEnabled = NO;
+        timeZone = [[NSTimeZone localTimeZone] retain];
+        recentImage = nil;
+        
+        screenUpdateLock = [[NSLock alloc] init];
+		
+        [self setSourceDescription:NSFullUserName()];
+        [self setSourceSubDescription:[NSString stringWithFormat:@"Desktop #%d",initialScreen]];
+        
+        if (![self setupGLForScreenNumber:initialScreen]) {
+            NSLog(@"Error setting up screen grabbing");
+            [self autorelease];
+            return nil;
+        }
+    }
+	
+    return self;
+}
+
+
 - (void)dealloc
 {
     [self stop];
@@ -169,6 +193,9 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
     NSNumber *screenID = 
         [[screen deviceDescription] objectForKey:@"NSScreenNumber"];
     
+	//NSLog(@"ScreenID: %d ptr: %d",[screenID intValue], [screenID pointerValue]);
+	//NSLog(@"Main Display: %d", CGMainDisplayID());
+	
     CGDirectDisplayID displayToUse;
     
     if (!screenID) {
@@ -189,13 +216,16 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
         
     float screenWidth = [screen frame].size.width;
     float screenHeight = [screen frame].size.height;
-    
+	
     CGLChoosePixelFormat(attribs, &pixelFormatObj, &numPixelFormats);
-    
-    CGLSetCurrentContext(NULL);
-    CGLClearDrawable(glContextObj);
+	
+	
+    CGLSetCurrentContext(NULL); //doesnt set a context? uhhh
+	CGLClearDrawable(glContextObj);
     CGLDestroyContext(glContextObj);
-    CGLCreateContext(pixelFormatObj, NULL, &glContextObj);
+    
+	//store our context so we can use it later
+	CGLCreateContext(pixelFormatObj, NULL, &glContextObj);
         
     CGLDestroyPixelFormat(pixelFormatObj);
     
@@ -228,7 +258,11 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
 
 - (NSImage *)captureFrame
 {        
-    [screenUpdateLock lock];
+	//Change Back to our context so we capture our screen
+	CGLSetCurrentContext(glContextObj);
+    CGLSetFullScreen(glContextObj);
+	
+	[screenUpdateLock lock];
     glFinish();
     glPixelStorei(GL_PACK_ALIGNMENT, 4);	/* Force 4-byte alignment */
     glPixelStorei(GL_PACK_ROW_LENGTH, 0);
@@ -273,7 +307,7 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
 
 - (void)setRecentImage:(NSImage *)newImage
 {
-    [newImage retain];
+	[newImage retain];
     [recentImage release];
     recentImage = newImage;
     [recentTime release];

@@ -16,6 +16,16 @@
         imageSource = [[ScreenImageSource alloc] init];
         [self registerForNotifications];
     }
+	
+    return self;
+}
+
+- (id)initWithDelegate:(id)newDelegate andScreenNumber:(int)screenNum
+{
+    if (self = [super initWithDelegate:newDelegate]) {
+        imageSource = [[ScreenImageSource alloc] initWithScreenNumber:screenNum];
+        [self registerForNotifications];
+    }
     
     return self;
 }

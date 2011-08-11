@@ -574,7 +574,14 @@
 			isa = PBXProject;
 			buildConfigurationList = ED5C98C208763692003C1476 /* Build configuration list for PBXProject "Gawker" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* Gawker */;
 			projectDirPath = "";
 			projectRoot = "";
