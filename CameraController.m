@@ -24,6 +24,8 @@
     if (self = [super init]) {
         isRecording = NO;
         delegate = newDelegate;
+		
+		if(timeTextAttributes != nil)[timeTextAttributes release];
         timeTextAttributes = [[NSMutableDictionary alloc] init];
 		NSShadow *shadow = [[NSShadow alloc] init];
         [shadow setShadowOffset:NSMakeSize(1.1, -1.1)];
@@ -124,7 +126,8 @@ NSInteger randomIntegerBetween(NSInteger min, NSInteger max) {
 		[fileMan createDirectoryAtPath:tmpOutputFolder attributes:nil];
 	}
 	NSLog(@"Starting Recording to %@",tmpOutputFolder);
-		
+	
+	if(outputMovie) [outputMovie release];
     outputMovie = [[LapseMovie alloc] initWithFilename:file
                                       quality:quality
                                       FPS:fps];
@@ -208,8 +211,7 @@ int finderSortWithLocale(id string1, id string2, void *locale)
     if (isRecording) {
         //collect the images and create a mov and write to disk.
 		NSFileManager *fileMan = [NSFileManager defaultManager];
-		NSError **error;
-		NSMutableArray *dirCont = [fileMan contentsOfDirectoryAtPath:tmpOutputFolder error:error];
+		NSMutableArray *dirCont = [fileMan contentsOfDirectoryAtPath:tmpOutputFolder error:nil];
 		[dirCont sortUsingFunction:finderSortWithLocale context:[NSLocale currentLocale]];
 		NSEnumerator *dirEnum = [dirCont objectEnumerator];
 		
@@ -224,6 +226,7 @@ int finderSortWithLocale(id string1, id string2, void *locale)
 				//append image to movie
 				[outputMovie addImage:image];
 				[image release];
+				
 			}
 		}
 		
@@ -251,8 +254,8 @@ int finderSortWithLocale(id string1, id string2, void *locale)
 	NSLog(@"Writing %@",toWrite);
 	
 	//write file to disk
-	NSData *imageData = [theImage TIFFRepresentation];
-	NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
+	NSData *imageData = nil;
+	NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:[theImage TIFFRepresentation]];
 	imageData = [imageRep representationUsingType:NSPNGFileType properties:nil];
 	[imageData writeToFile:toWrite atomically:NO];
 	
@@ -264,7 +267,7 @@ int finderSortWithLocale(id string1, id string2, void *locale)
     if (isRecording) {
         NSLog(@"Recording Current Image");
 				
-        NSImage *image = [imageSource recentImage];
+        NSImage *image = [imageSource recentImage]; //possible leak?
 
         if (!image) {
             NSLog(@"Image is nil, won't record");

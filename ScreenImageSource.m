@@ -27,6 +27,7 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
         timeZone = [[NSTimeZone localTimeZone] retain];
         recentImage = nil;
         
+		if(screenUpdateLock){ [screenUpdateLock release]; }
         screenUpdateLock = [[NSLock alloc] init];
 
         [self setSourceDescription:NSFullUserName()];
@@ -50,6 +51,7 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
         timeZone = [[NSTimeZone localTimeZone] retain];
         recentImage = nil;
         
+		if(screenUpdateLock){ [screenUpdateLock release]; }
         screenUpdateLock = [[NSLock alloc] init];
 		
         [self setSourceDescription:NSFullUserName()];
@@ -156,7 +158,7 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
 {
     NSImage *image = nil;
     if (isEnabled) {
-        [self setRecentImage:[self captureFrame]];
+		[self setRecentImage:[self captureFrame]];
         image = recentImage;
     }
     return image;
@@ -274,7 +276,7 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
                  GL_UNSIGNED_INT_8_8_8_8_REV,
                  [bitmap bitmapData]);
     swizzleBitmap(bitmap);
-    NSData *png = [bitmap representationUsingType:NSPNGFileType properties:nil];
+    NSData *png = [bitmap representationUsingType:NSPNGFileType properties:nil]; //this'll leak if we dont release it.
     NSRect fromRect = [screen frame];
     [screenUpdateLock unlock];
     
@@ -302,6 +304,7 @@ static void swizzleBitmap(NSBitmapImageRep * bitmap);
     CGContextDrawImage(imageContext, *(CGRect*)&scaledRect, image);
     [newImage unlockFocus];
 	
+	[png release];
     return newImage;
 }
 

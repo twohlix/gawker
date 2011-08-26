@@ -13,7 +13,8 @@
 - (id)initWithDelegate:(id)newDelegate
 {
     if (self = [super initWithDelegate:newDelegate]) {
-        imageSource = [[ScreenImageSource alloc] init];
+        if(imageSource){ [imageSource release]; }
+		imageSource = [[ScreenImageSource alloc] init];
         [self registerForNotifications];
     }
 	
@@ -23,6 +24,7 @@
 - (id)initWithDelegate:(id)newDelegate andScreenNumber:(int)screenNum
 {
     if (self = [super initWithDelegate:newDelegate]) {
+		if(imageSource){ [imageSource release]; }
         imageSource = [[ScreenImageSource alloc] initWithScreenNumber:screenNum];
         [self registerForNotifications];
     }

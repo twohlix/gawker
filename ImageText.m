@@ -138,14 +138,16 @@ attributes:(NSDictionary *)attributes scaleFactor:(double)scale
     return [rnd autorelease];
 }
 
+#pragma mark Output Layout is here!
 + (NSImage *)compositeImages:(NSArray *)images
                  sizeOfEach:(NSSize)size
 {
     int numImages = [images count];
     
     NSSize outSize;
-    
-    if (numImages == 4) {
+	
+    //replace this with a better layout mechanism
+    if (numImages == 4) { //this should actually be with any square number (4,9,16,25etc..)
         outSize.width = 2 * size.width;
         outSize.height = 2 * size.height;
     }
@@ -180,7 +182,7 @@ attributes:(NSDictionary *)attributes scaleFactor:(double)scale
     }
     [compImage unlockFocus];
 
-    return [compImage autorelease];
+    return [compImage autorelease]; //i think this is where the memory issue is
 }
 
 + (NSImage *)imageFromCIImage:(CIImage *)ciImage

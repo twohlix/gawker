@@ -205,6 +205,8 @@
         return;
     }
     
+	//this is BAD!!!
+	//why do we get a movie everytime we hit the preview button?
     QTMovie *movie = [camController movie];
 
     if ([sender state]) {

@@ -18,7 +18,8 @@
 	
 	screenNumber = 0;
     if (self) {
-        camController = [[ScreenCameraController alloc] initWithDelegate:self andScreenNumber:screenNumber];
+        if (camController){ [camController release]; }
+		camController = [[ScreenCameraController alloc] initWithDelegate:self andScreenNumber:screenNumber];
         if (camController) {
             [[self window] setTitle:[NSString stringWithFormat:@"%d", screenNumber]];
 			[(ScreenCameraController *)camController setScreenToGrab:screenNumber];
@@ -36,6 +37,7 @@
 	
 	screenNumber = screenNum;
     if (self) {
+		if (camController){ [camController release]; }
         camController = [[ScreenCameraController alloc] initWithDelegate:self andScreenNumber:screenNumber];
         if (camController) {
             [[self window] setTitle:[NSString stringWithFormat:@"%d", screenNumber]];
