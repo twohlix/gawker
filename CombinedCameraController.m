@@ -42,11 +42,13 @@
 - (id)initWithSources:(NSArray *)sources delegate:(id)theDelegate
 {
     if (self = [super initWithDelegate:theDelegate]) {
-        components = 
-            [[NSMutableArray arrayWithCapacity:[sources count]] retain];
+        int sourceCount = [sources count];
+		
+		components = 
+            [[NSMutableArray arrayWithCapacity:sourceCount] retain];
 
         thumbnails =
-            [[NSMutableArray arrayWithCapacity:[sources count]] retain];
+            [[NSMutableArray arrayWithCapacity:sourceCount] retain];
         
         NSEnumerator *sourceEnum = [sources objectEnumerator];
         id<ImageSource> source = nil;
@@ -140,8 +142,9 @@
 {
     if (isRecording) {
         NSLog(@"Recording Current Image");
-        [outputMovie addImage:[self recordImageWithTime:putTimeOnImage]];
-        // Flip all switches to not updated
+        //[outputMovie addImage:[self recordImageWithTime:putTimeOnImage]];
+        [self storeImage:[self recordImageWithTime:putTimeOnImage]];
+		 // Flip all switches to not updated
         [components makeObjectsPerformSelector:@selector(clearNew)];
     }
 }

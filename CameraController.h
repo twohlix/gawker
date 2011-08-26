@@ -15,6 +15,8 @@
 @interface CameraController : NSObject {
     // Movie Recording
     LapseMovie *outputMovie;
+	NSString *tmpOutputFolder;
+	int imgCount;
     BOOL isRecording;
     BOOL putTimeOnImage;
     double scaleFactor;

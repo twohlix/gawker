@@ -63,6 +63,25 @@
     return isRecording;
 }
 
+//return a random alphanumeric ascii character
+char randomAlphanumericChar(){
+	int router = randomIntegerBetween(0, 2);
+	
+	if( router == 0 ){
+		return randomIntegerBetween(48, 57);
+	}
+	
+	if( router == 1 ){
+		return randomIntegerBetween(65, 90);
+	}
+	
+	return randomIntegerBetween(97, 122);
+}
+
+NSInteger randomIntegerBetween(NSInteger min, NSInteger max) {
+    return (random() % (max - min + 1)) + min;
+}
+
 - (BOOL)startRecordingToFilename:(NSString *)file
                          quality:(NSString *)quality
                      scaleFactor:(double)scale
@@ -81,6 +100,31 @@
     putTimeOnImage = applyTime;
     scaleFactor = scale;
     
+	//create an output folder to store the images in
+	NSFileManager *fileMan = [NSFileManager defaultManager];
+	if(tmpOutputFolder){ [tmpOutputFolder release]; }
+	tmpOutputFolder = [[NSMutableString alloc] initWithString:NSHomeDirectory()];
+	[tmpOutputFolder appendString:@"/Gawker/"];
+	if([fileMan fileExistsAtPath:tmpOutputFolder] == NO){
+		[fileMan createDirectoryAtPath:tmpOutputFolder attributes:nil];
+	}
+	
+	//reset what image num we're on
+	imgCount = 0;
+	
+	//create a random name for the folder
+	srand(time( NULL ));
+	srandom(time(NULL));
+	int i;
+	for(i=0;i<8;++i){
+		[tmpOutputFolder appendFormat:@"%c", randomAlphanumericChar()];
+	}
+	[tmpOutputFolder appendFormat:@"%c", '/'];
+	if([fileMan fileExistsAtPath:tmpOutputFolder] == NO){
+		[fileMan createDirectoryAtPath:tmpOutputFolder attributes:nil];
+	}
+	NSLog(@"Starting Recording to %@",tmpOutputFolder);
+		
     outputMovie = [[LapseMovie alloc] initWithFilename:file
                                       quality:quality
                                       FPS:fps];
@@ -95,11 +139,99 @@
     return isRecording;
 }
 
+int finderSortWithLocale(id string1, id string2, void *locale)
+{
+    static NSStringCompareOptions comparisonOptions =
+	NSCaseInsensitiveSearch | NSNumericSearch |
+	NSWidthInsensitiveSearch | NSForcedOrderingSearch;
+	
+    NSRange string1Range = NSMakeRange(0, [string1 length]);
+	
+    return [string1 compare:string2
+                    options:comparisonOptions
+					  range:string1Range
+					 locale:(NSLocale *)locale];
+}
+
+
+- (void)constructMovieFromFolder:(NSString *)folderPath
+{
+	if(!outputMovie){ 
+		//create a movie OR error
+	}
+		
+	//collect the images and create a mov and write to disk.
+	NSFileManager *fileMan = [NSFileManager defaultManager];
+	if([fileMan fileExistsAtPath:folderPath] == NO){
+		//error and return
+	}
+	
+	NSError **error;
+	NSMutableArray *dirCont = [fileMan contentsOfDirectoryAtPath:folderPath error:error];
+	[dirCont sortUsingFunction:finderSortWithLocale context:[NSLocale currentLocale]];
+	NSEnumerator *dirEnum = [dirCont objectEnumerator];
+	
+	NSLog(@"Constructing Movie");
+	NSString *file;
+	NSImage *image;
+	while( file = [dirEnum nextObject] ){ //this doenst do things in the order we need. 1 10 11 12 2 3 4 5 etc...
+		if([[file pathExtension] isEqualToString:@"png"]){
+			//read image from tmpOutputFolder appended with filename
+			image = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithFormat:@"%@%@",folderPath,file]];
+			
+			//append image to movie
+			[outputMovie addImage:image];
+			[image release];
+		}
+	}
+}
+
+- (BOOL)destroyTempFolder
+{
+	if(!tmpOutputFolder){
+		return NO;
+	}
+	
+	NSFileManager *fileMan = [NSFileManager defaultManager];
+	if([fileMan fileExistsAtPath:tmpOutputFolder] == NO ){
+		return NO;
+	}
+	
+	NSLog(@"Destroying Temporary Folder: %@",tmpOutputFolder);
+	return [fileMan removeItemAtPath:tmpOutputFolder error:nil];
+	
+}
+
 - (BOOL)stopRecording
 {
     BOOL success = YES;
     if (isRecording) {
-        success = [outputMovie writeToDisk];
+        //collect the images and create a mov and write to disk.
+		NSFileManager *fileMan = [NSFileManager defaultManager];
+		NSError **error;
+		NSMutableArray *dirCont = [fileMan contentsOfDirectoryAtPath:tmpOutputFolder error:error];
+		[dirCont sortUsingFunction:finderSortWithLocale context:[NSLocale currentLocale]];
+		NSEnumerator *dirEnum = [dirCont objectEnumerator];
+		
+		NSLog(@"Constructing Movie");
+		NSString *file;
+		NSImage *image;
+		while( file = [dirEnum nextObject] ){ 
+			if([[file pathExtension] isEqualToString:@"png"]){
+				//read image from tmpOutputFolder appended with filename
+				image = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithFormat:@"%@%@",tmpOutputFolder,file]];
+				
+				//append image to movie
+				[outputMovie addImage:image];
+				[image release];
+			}
+		}
+		
+		success = [outputMovie writeToDisk];
+		if(success == NO) NSLog(@"Movie incorrectly written");
+		if(success == YES){
+			[self destroyTempFolder];
+		}
         [outputMovie release];
         outputMovie = nil;
         isRecording = NO;
@@ -107,14 +239,35 @@
     return success;
 }
 
+- (void)storeImage:(NSImage *)theImage
+{
+	if(!theImage){
+		NSLog(@"Image is nil, won't record");
+		return;
+	}
+	
+	imgCount++;
+	NSString *toWrite = [NSString stringWithFormat:@"%@%d.png",tmpOutputFolder,imgCount];
+	NSLog(@"Writing %@",toWrite);
+	
+	//write file to disk
+	NSData *imageData = [theImage TIFFRepresentation];
+	NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
+	imageData = [imageRep representationUsingType:NSPNGFileType properties:nil];
+	[imageData writeToFile:toWrite atomically:NO];
+	
+	
+}
+
 - (void)recordCurrentImage
 {
     if (isRecording) {
         NSLog(@"Recording Current Image");
+				
         NSImage *image = [imageSource recentImage];
 
         if (!image) {
-            NSLog(@"Image in nil, won't record");
+            NSLog(@"Image is nil, won't record");
 			return;
         }
 
@@ -133,7 +286,10 @@
             image = [ImageText compositeImages:images
                                sizeOfEach:imgSize];
         }
-        [outputMovie addImage:image];
+		
+		[self storeImage:image];
+		
+        //[outputMovie addImage:image];
     }
 }
 
