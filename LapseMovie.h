@@ -19,11 +19,11 @@
 	// the upper left hand corner of the screen.
 	QTMovieView *movieView;
 	QTMovie *movie;
-    NSString *tempFilename;
     NSString *outFilename;
     NSDictionary *movieDict;
     QTTime frameDuration;
 	DataHandler mDataHandlerRef;
+	int frameCount;
 }
 
 - (id)initWithFilename:(NSString *)file

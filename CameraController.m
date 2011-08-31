@@ -212,30 +212,43 @@ int finderSortWithLocale(id string1, id string2, void *locale)
         //collect the images and create a mov and write to disk.
 		NSFileManager *fileMan = [NSFileManager defaultManager];
 		NSMutableArray *dirCont = [fileMan contentsOfDirectoryAtPath:tmpOutputFolder error:nil];
+		//NSMutableArray *dirCont = [fileMan contentsOfDirectoryAtPath:@"/Users/csmith/Gawker/5K5RR1YF/" error:nil];
 		[dirCont sortUsingFunction:finderSortWithLocale context:[NSLocale currentLocale]];
 		NSEnumerator *dirEnum = [dirCont objectEnumerator];
 		
 		NSLog(@"Constructing Movie");
 		NSString *file;
-		NSImage *image;
+		NSImage *image;	
+		NSAutoreleasePool *thePool = [[NSAutoreleasePool alloc] init];	//need this to keep QTMovie Memory in our control
+		int i=0; //this should be spawned into a new thread and the interface should be locked?
 		while( file = [dirEnum nextObject] ){ 
+			i++;
 			if([[file pathExtension] isEqualToString:@"png"]){
+				
+				
 				//read image from tmpOutputFolder appended with filename
 				image = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithFormat:@"%@%@",tmpOutputFolder,file]];
-				
+				//image = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithFormat:@"%@%@",@"/Users/csmith/Gawker/5K5RR1YF/",file]];
+
 				//append image to movie
 				[outputMovie addImage:image];
 				[image release];
 				
+				//release QT stuff we dont need
+				if(i%50==0){
+					[thePool release];
+					thePool = [[NSAutoreleasePool alloc] init];
+				}
 			}
 		}
 		
 		success = [outputMovie writeToDisk];
 		if(success == NO) NSLog(@"Movie incorrectly written");
 		if(success == YES){
-			[self destroyTempFolder];
+		//	[self destroyTempFolder];
 		}
         [outputMovie release];
+		[thePool release];
         outputMovie = nil;
         isRecording = NO;
     }
